@@ -1,3 +1,4 @@
 bin/
-.github/
-.goreleaser.yml
+.github/*
+.goreleaser*
+stats.*
