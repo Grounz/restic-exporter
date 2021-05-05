@@ -1,0 +1,18 @@
+# HELP restic_snapshot_timestamp 
+# TYPE restic_snapshot_timestamp gauge
+restic_snapshot_timestamp{job="restic-exporter",projectId="aa",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 1.62011689e+09
+restic_snapshot_timestamp{job="restic-exporter",projectId="cc",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 1.62011689e+09
+restic_snapshot_timestamp{job="restic-exporter",projectId="dd",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 1.62011689e+09
+restic_snapshot_timestamp{job="restic-exporter",projectId="ss",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 1.62011689e+09
+# HELP restic_snapshot_total_file_count 
+# TYPE restic_snapshot_total_file_count gauge
+restic_snapshot_total_file_count{job="restic-exporter",projectId="aa",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 2950
+restic_snapshot_total_file_count{job="restic-exporter",projectId="cc",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 2950
+restic_snapshot_total_file_count{job="restic-exporter",projectId="dd",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 2950
+restic_snapshot_total_file_count{job="restic-exporter",projectId="ss",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 2950
+# HELP restic_snapshot_total_size 
+# TYPE restic_snapshot_total_size gauge
+restic_snapshot_total_size{job="restic-exporter",projectId="aa",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 7.466395851e+09
+restic_snapshot_total_size{job="restic-exporter",projectId="cc",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 7.466395851e+09
+restic_snapshot_total_size{job="restic-exporter",projectId="dd",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 7.466395851e+09
+restic_snapshot_total_size{job="restic-exporter",projectId="ss",repository="s3:https://cellar-c2.services.clever-cloud.com/backup-ma-feyzin-pilotage-aides-production"} 7.466395851e+09

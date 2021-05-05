@@ -8,25 +8,39 @@ import (
 )
 
 var (
-	config       = flag.String("config", "restic-exporter.yaml", "Name of the config file to use")
 	output       = flag.String("output", "stats.txt", "File to export the stats to")
 	resticBinary = flag.String("restic-bin", "restic", "Location of the restic binary to use (defaults to loading the one in your PATH)")
 )
 
-func collectMetrics(config Config) *prometheus.Registry {
+func collectMetrics(repoListConfig []configRepoRestic) *prometheus.Registry {
+	registry := prometheus.NewRegistry()
+	resticJobLabel := "restic-exporter"
 	snapshot := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_snapshot_timestamp",
-	}, []string{"name"})
-	registry := prometheus.NewRegistry()
+	}, []string{"projectId", "repository", "job"})
+
 	registry.Register(snapshot)
 
-	for name, configItem := range config {
-		restic := Restic{Binary: *resticBinary, Name: name, Repository: configItem.Repository, Password: configItem.Password}
+	snapshotTotalSize := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "restic_snapshot_total_size",
+	}, []string{"projectId", "repository", "job"})
+	registry.Register(snapshotTotalSize)
+
+	snapshotTotalFile := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "restic_snapshot_total_file_count",
+	}, []string{"projectId", "repository", "job"})
+	registry.Register(snapshotTotalFile)
+
+	for index, configItem := range repoListConfig {
+		restic := Restic{Binary: *resticBinary, Name: configItem.RepositoryName, Repository: configItem.RepositoryConf.RepositoryUrl, Password: configItem.RepositoryConf.RepositoryPass}
 		timestamp, err := restic.SnapshotTimestamp()
+		totalSize, totalFileCount, err := restic.SnapshotsStats()
 		if err != nil {
-			log.Printf("[%s] <ERR> %s", name, err)
+			log.Printf("[%s] <ERR> %s", index, err)
 		}
-		snapshot.WithLabelValues(name).Set(float64(timestamp))
+		snapshot.WithLabelValues(configItem.RepositoryName, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(timestamp))
+		snapshotTotalSize.WithLabelValues(configItem.RepositoryName, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalSize))
+		snapshotTotalFile.WithLabelValues(configItem.RepositoryName, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalFileCount))
 	}
 
 	return registry
@@ -34,9 +48,11 @@ func collectMetrics(config Config) *prometheus.Registry {
 
 func main() {
 	flag.Parse()
-	config := readConfig(*config)
 
-	registry := collectMetrics(config)
+	getEnvVars := &EnvConfig{}
+	envVars := getEnvVars.getEnvVars()
+	repoListConfig := initResticConfigInMemory(envVars)
+	registry := collectMetrics(repoListConfig)
 	err := prometheus.WriteToTextfile(*output, registry)
 	if err != nil {
 		log.Fatal(err)

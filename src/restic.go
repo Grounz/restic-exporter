@@ -10,8 +10,8 @@ import (
 )
 
 type StatsResponse struct {
-	TotalSize      int `json:"total_size"`
-	TotalFileCount int `json:"total_file_count"`
+	TotalSize      int64 `json:"total_size"`
+	TotalFileCount int64 `json:"total_file_count"`
 }
 
 type SnapshotResponse struct {
@@ -53,4 +53,13 @@ func (restic Restic) SnapshotTimestamp() (int64, error) {
 
 	time, err := time.Parse(time.RFC3339Nano, snapshots[0].Time)
 	return time.Unix(), err
+}
+
+func (restic Restic) SnapshotsStats() (int64, int64, error) {
+	statsResponse := StatsResponse{}
+	err := restic.Run([]string{"stats", "latest"}, &statsResponse)
+	if err != nil {
+		return -1, -1, err
+	}
+	return statsResponse.TotalSize, statsResponse.TotalFileCount, err
 }
