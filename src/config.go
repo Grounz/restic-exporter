@@ -56,7 +56,8 @@ func initResticConfigInMemory(envVars EnvConfig) []configRepoRestic{
 		for _, envId := range envIdDirectory {
 			resticConfFile, err := os.Open(envVars.resticCredentialsPathDirectory + "/" + repoProjectIdName + "/" + envId.Name() + "/" + envVars.resticCredentialsFile)
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
+				continue
 			}
 			defer resticConfFile.Close()
 			scanner := bufio.NewScanner(resticConfFile)
