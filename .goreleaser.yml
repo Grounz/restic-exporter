@@ -1,2 +1,4 @@
 builds:
-  - main: ./src/my-app
+  - main: ./src/
+    id: "restic-exporter"
+    binary: "restic-exporter"
