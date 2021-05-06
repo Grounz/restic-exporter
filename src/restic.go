@@ -18,6 +18,8 @@ type SnapshotResponse struct {
 	Time string `json:"time"`
 }
 
+type SnapshotCount interface{}
+
 type Restic struct {
 	Binary     string
 	Name       string
@@ -35,13 +37,22 @@ func (restic Restic) Run(arguments []string, target interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	err = json.Unmarshal(output, target)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (restic Restic) SnapshotCount() (int64, error) {
+	snapshotCounter := make([]SnapshotCount, 0)
+	err := restic.Run([]string{"snapshots"}, &snapshotCounter)
+	if err != nil {
+		return -1, err
+	}
+	snapCounter := len(snapshotCounter)
+	return int64(snapCounter), err
 }
 
 func (restic Restic) SnapshotTimestamp() (int64, error) {
@@ -51,8 +62,8 @@ func (restic Restic) SnapshotTimestamp() (int64, error) {
 		return -1, err
 	}
 
-	time, err := time.Parse(time.RFC3339Nano, snapshots[0].Time)
-	return time.Unix(), err
+	snapTime, err := time.Parse(time.RFC3339Nano, snapshots[0].Time)
+	return snapTime.Unix(), err
 }
 
 func (restic Restic) SnapshotsStats() (int64, int64, error) {

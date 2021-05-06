@@ -20,22 +20,36 @@ ARGS="-collector.textfile.directory=\"/var/lib/prometheus/node-exporter/\""
 
 For use restic-exporter you must be set  directory tree structure for get credentials for all restic repository.
 
-Above, there is an example for my project
+Above, there is an example for my project, we use this logic:
 
+On restic backup server we backup many environments and we have a rule for create backup repository: 
+
+1. An environment is identified by `projectID` and `envId`:
+    - `projectId`: is the directory name which contains `envId`, example `my-customer`
+    - `envId`: is the directory of this environments, example `production`
+    
+2. Backup server set all `projectId` and `envId` in the same parents backup directory, example:
+    - `/home/backup/vault/`in this directory we have all `projectId` and `envId` directory
+    - in each `projectId/envId` we have a `.restic_confg_file` secret
+    
+3. Restic-exporter loop over each `projectId/envId` and get `.restic_config_file`, capture environment values and check restic repository to have metrics
+    
 ```shell
-restic
-|____resticRepo1
-| |____.restic_config_file
-|____resticRepo2
-| |____.restic_config_file
-|____resticRepo3
-| |____.restic_config_file
-|____resticRepo4
-| |____.restic_config_file
-```
-All files are used by restic-exporter on loop over. restic-exporter loop on .restic_config_file and get `repositoryUrl` and `repositoryPass`
+/home/backup/vault/
+|____my-projectId-1
+| |____my-envId
+| | |____.restic_config_file
+|____my-projectId-2
+| |____test
+|____my-projectId-3
+| |____dev
+| | |____.restic_config_file
 
-Above example for `.restic_config_file`, restic-exporter use regexp for capture only restic repository and password and use them on memory only, then for each restic repository we export all metrics.:
+```
+
+All files are used by restic-exporter on loop over. restic-exporter loop on .restic_config_file and get `repositoryUrl` and `repositoryPass` with regexp.
+
+Each `.restic_config_file` must be have:
 
 ```shell
 export RESTIC_REPOSITORY=resticRepoUrl
@@ -45,7 +59,7 @@ export RESTIC_PASSWORD=resticPassword
 So define this environments values:
 
 ```shell
-RESTIC_CREDENTIALS_PATH: /tmp/restic
+RESTIC_CREDENTIALS_PATH: /home/backup/vault/
 RESTIC_CREDENTIALS_FILE: .restic_config_file
 ```
 
@@ -54,9 +68,10 @@ up and exposed to prometheus by `node-exporter`.
 
 This will generate many prometheus metrics:
 ```
-restic_snapshot_timestamp{projectId="arbitrary-name-here", repository="s3://repoUrl"} 1.599849001e+09
-restic_total_size{projectId="arbitrary-name-here", repository="s3://repoUrl"} 1.599849001e+09
-restic_total_file_count{projectId="arbitrary-name-here", repository="s3://repoUrl"} 7.466395851e+09
+restic_snapshot_timestamp{repository="projectID+envId", s3Bucket="s3://repoUrl"} 1.599849001e+09
+restic_total_size{repository="projectID+envId", s3Bucket="s3://repoUrl"} 1.599849001e+09
+restic_total_file_count{repository="projectID+envId", s3Bucket="s3://repoUrl"} 7.466395851e+09
+restic_snapshot_count{repository="projectID+envId", s3Bucket="s3://repoUrl"} 2
 ```
 
 ## Why not make this a 'real' exporter

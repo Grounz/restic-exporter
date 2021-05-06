@@ -19,22 +19,45 @@ func collectMetrics(repoListConfig []configRepoRestic) *prometheus.Registry {
 		Name: "restic_snapshot_timestamp",
 	}, []string{"repository", "s3Bucket", "job"})
 
-	registry.Register(snapshot)
+	err := registry.Register(snapshot)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	snapshotTotalSize := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_snapshot_total_size",
 	}, []string{"repository", "s3Bucket", "job"})
-	registry.Register(snapshotTotalSize)
-
+	err = registry.Register(snapshotTotalSize)
+	if err != nil {
+		log.Fatal(err)
+	}
 	snapshotTotalFile := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_snapshot_total_file_count",
 	}, []string{"repository", "s3Bucket", "job"})
-	registry.Register(snapshotTotalFile)
+	err = registry.Register(snapshotTotalFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	snapshotCount := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "restic_snapshot_count",
+	}, []string{"repository", "s3Bucket", "job"})
+
+	err = registry.Register(snapshotCount)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for index, configItem := range repoListConfig {
 		restic := Restic{Binary: *resticBinary, Name: configItem.RepositoryProjectId, Repository: configItem.RepositoryConf.RepositoryUrl, Password: configItem.RepositoryConf.RepositoryPass}
 		timestamp, err := restic.SnapshotTimestamp()
+		if err != nil {
+			log.Printf("[%s] <ERR> %s", index, err)
+		}
 		totalSize, totalFileCount, err := restic.SnapshotsStats()
+		if err != nil {
+			log.Printf("[%s] <ERR> %s", index, err)
+		}
+		snapshotCounter, err := restic.SnapshotCount()
 		if err != nil {
 			log.Printf("[%s] <ERR> %s", index, err)
 		}
@@ -42,6 +65,7 @@ func collectMetrics(repoListConfig []configRepoRestic) *prometheus.Registry {
 		snapshot.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(timestamp))
 		snapshotTotalSize.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalSize))
 		snapshotTotalFile.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalFileCount))
+		snapshotCount.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(snapshotCounter))
 	}
 	return registry
 }
