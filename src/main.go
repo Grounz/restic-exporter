@@ -17,18 +17,18 @@ func collectMetrics(repoListConfig []configRepoRestic) *prometheus.Registry {
 	resticJobLabel := "restic-exporter"
 	snapshot := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_snapshot_timestamp",
-	}, []string{"projectId", "envId", "repository", "job"})
+	}, []string{"repository", "s3Bucket", "job"})
 
 	registry.Register(snapshot)
 
 	snapshotTotalSize := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_snapshot_total_size",
-	}, []string{"projectId", "envId", "repository", "job"})
+	}, []string{"repository", "s3Bucket", "job"})
 	registry.Register(snapshotTotalSize)
 
 	snapshotTotalFile := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_snapshot_total_file_count",
-	}, []string{"projectId", "envId", "repository", "job"})
+	}, []string{"repository", "s3Bucket", "job"})
 	registry.Register(snapshotTotalFile)
 
 	for index, configItem := range repoListConfig {
@@ -38,9 +38,10 @@ func collectMetrics(repoListConfig []configRepoRestic) *prometheus.Registry {
 		if err != nil {
 			log.Printf("[%s] <ERR> %s", index, err)
 		}
-		snapshot.WithLabelValues(configItem.RepositoryProjectId, configItem.RepositoryEnvId, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(timestamp))
-		snapshotTotalSize.WithLabelValues(configItem.RepositoryProjectId, configItem.RepositoryEnvId, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalSize))
-		snapshotTotalFile.WithLabelValues(configItem.RepositoryProjectId, configItem.RepositoryEnvId, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalFileCount))
+		repository := configItem.RepositoryProjectId + "-" + configItem.RepositoryEnvId
+		snapshot.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(timestamp))
+		snapshotTotalSize.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalSize))
+		snapshotTotalFile.WithLabelValues(repository, configItem.RepositoryConf.RepositoryUrl, resticJobLabel).Set(float64(totalFileCount))
 	}
 	return registry
 }
